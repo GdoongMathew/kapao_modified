@@ -235,7 +235,8 @@ class SpatialPyramidPoolingFast(nn.Module):
         _c = c_in // 2
         self.conv_in = ConvBnAct(
             c_in,
-            _c, kernel_size=1
+            _c,
+            kernel_size=1
         )
         self.conv_out = ConvBnAct(
             _c * 4,
@@ -253,7 +254,7 @@ class SpatialPyramidPoolingFast(nn.Module):
         x1 = self.pooling(x)
         x2 = self.pooling(x1)
         x3 = self.pooling(x2)
-        return self.conv_out(torch.concat([x, x1, x2, x3], dim=1))
+        return self.conv_out(torch.cat([x, x1, x2, x3], dim=1))
 
 
 SPPF = SpatialPyramidPoolingFast

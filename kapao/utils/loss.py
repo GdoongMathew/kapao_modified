@@ -69,7 +69,7 @@ class Loss:
     ):
         self.model = model
         self.num_classes = num_classes
-        self.anchors = [module.anchor for module in list(self.model.children())[-1]]
+        self.anchors = [module.anchor for module in list(self.model.children())[-1]][::-1]
         self.num_anchors = len(self.anchors[0].flatten()) // 2
         self.focal_alpha = focal_alpha
         self.focal_gamma = focal_gamma

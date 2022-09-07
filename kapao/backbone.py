@@ -52,18 +52,21 @@ class YoloV56(nn.Module):
             padding=2,
             stride=2
         )
+
         self.module_list = nn.ModuleList(
             [
                 nn.Sequential(
                     ConvBnAct(c_in=c_in, c_out=c_out, kernel_size=3, padding=1, stride=2),
                     BottleneckC3SP(c_in=c_out, c_out=c_out, n=n, expansion=.5, shortcut=True),
                 )
-                for c_in, c_out, n in zip(module_ch[:-1], module_ch[1:], repeat_n)
+                for c_in, c_out, n in zip(module_ch[:-2], module_ch[1:-1], repeat_n[:-1])
             ]
         )
 
-        self.sppf = SPPF(
-            c_in=module_ch[-1], c_out=module_ch[-1], pool_size=5
+        self.p6 = nn.Sequential(
+            ConvBnAct(c_in=module_ch[-2], c_out=module_ch[-1], kernel_size=3, stride=2),
+            SPPF(c_in=module_ch[-1], c_out=module_ch[-1], pool_size=5),
+            BottleneckC3SP(c_in=module_ch[-1], c_out=module_ch[-1], n=repeat_n[-1], shortcut=False),
         )
 
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
@@ -73,33 +76,6 @@ class YoloV56(nn.Module):
             x = module(x)
             ret.append(x)
 
-        ret[-1] = self.sppf(ret[-1])
+        ret.append(self.p6(ret[-1]))
 
         return ret
-
-    #     self.module_list = nn.ModuleList(
-    #         [
-    #             nn.Sequential(
-    #                 ConvBnAct(c_in=c_in, c_out=c_out, kernel_size=3, padding=1, stride=2),
-    #                 BottleneckC3SP(c_in=c_out, c_out=c_out, n=n, expansion=.5, shortcut=True),
-    #             )
-    #             for c_in, c_out, n in zip(module_ch[:-2], module_ch[1:-1], repeat_n[:-1])
-    #         ]
-    #     )
-    #
-    #     self.p6 = nn.Sequential(
-    #         ConvBnAct(c_in=module_ch[-2], c_out=module_ch[-1], kernel_size=3, stride=2),
-    #         SPPF(c_in=module_ch[-1], c_out=module_ch[-1], pool_size=5),
-    #         BottleneckC3SP(c_in=module_ch[-1], c_out=module_ch[-1], n=repeat_n[-1], shortcut=False),
-    #     )
-    #
-    # def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
-    #     x = self.stem(x)
-    #     ret = []
-    #     for module in self.module_list:
-    #         x = module(x)
-    #         ret.append(x)
-    #
-    #     ret.append(self.p6(ret[-1]))
-    #
-    #     return ret
